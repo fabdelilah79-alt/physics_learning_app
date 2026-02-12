@@ -5,7 +5,7 @@
 // Update CACHE_VERSION when deploying new content
 // =====================================================
 
-const CACHE_VERSION = 'sspoe-v2';
+const CACHE_VERSION = 'sspoe-v3';
 
 const PRECACHE_ASSETS = [
     './',
@@ -14,7 +14,9 @@ const PRECACHE_ASSETS = [
     './script.js',
     './data.js',
     './manifest.json',
-    './icons/icon-192.svg'
+    './icons/icon-192.svg',
+    './simulations/pression_sim.html',
+    './simulations/pression_sim2.html'
 ];
 
 // Install — pre-cache app shell
