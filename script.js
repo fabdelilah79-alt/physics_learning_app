@@ -28,6 +28,8 @@
     const $installBanner = document.getElementById('install-banner');
     const $btnInstall = document.getElementById('btn-install');
     const $installText = document.getElementById('install-text');
+    const $btnTheme = document.getElementById('btn-theme');
+    const $themeIcon = document.getElementById('theme-icon');
 
     // ── Helpers ──
     function t(obj) {
@@ -49,10 +51,17 @@
         $btnBack.style.visibility = visible ? 'visible' : 'hidden';
     }
 
+    // Escape HTML to prevent XSS when rendering user/content text
+    function escapeHTML(str) {
+        const el = document.createElement('span');
+        el.textContent = str;
+        return el.innerHTML;
+    }
+
     // Simple markdown-like bold parser for explanation text
     function formatText(text) {
         if (!text) return '';
-        return text
+        return escapeHTML(text)
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\n/g, '<br>');
     }
@@ -70,6 +79,7 @@
                 renderPlayer();
                 break;
         }
+        saveProgress();
     }
 
     // ── HOME SCREEN ──
@@ -224,7 +234,7 @@
 
             return `
         <div class="step-indicator">
-          <div class="step-dot ${dotClass}">
+          <div class="step-dot ${dotClass}"${dotClass === 'active' ? ' aria-current="step"' : ''}>
             <div class="step-circle">${step.icon}</div>
             <span class="step-label">${step.label}</span>
           </div>
@@ -541,6 +551,74 @@
         });
     }
 
+    // ── PROGRESS PERSISTENCE ──
+    function saveProgress() {
+        const progress = {
+            view: state.currentView,
+            levelId: state.currentLevel ? state.currentLevel.id : null,
+            courseId: state.currentCourse ? state.currentCourse.id : null,
+            activityId: state.currentActivity ? state.currentActivity.id : null,
+            step: state.sspoeStep,
+            answer: state.selectedAnswer
+        };
+        localStorage.setItem('sspoe-progress', JSON.stringify(progress));
+    }
+
+    function restoreProgress() {
+        try {
+            const raw = localStorage.getItem('sspoe-progress');
+            if (!raw) return;
+            const p = JSON.parse(raw);
+            if (!p.view || p.view === 'home') return;
+
+            if (p.levelId) {
+                state.currentLevel = APP_DATA.levels.find(function (l) { return l.id === p.levelId; });
+                if (!state.currentLevel) return;
+            }
+            if (p.courseId && state.currentLevel) {
+                state.currentCourse = state.currentLevel.courses.find(function (c) { return c.id === p.courseId; });
+            }
+            if (p.activityId && state.currentCourse) {
+                state.currentActivity = state.currentCourse.activities.find(function (a) { return a.id === p.activityId; });
+            }
+
+            if (p.view === 'player' && !state.currentActivity) return;
+            if (p.view === 'courses' && !state.currentLevel) return;
+
+            state.currentView = p.view;
+            state.sspoeStep = p.step || 0;
+            state.selectedAnswer = p.answer || null;
+        } catch (e) {
+            // Ignore corrupted progress data
+        }
+    }
+
+    // ── THEME ──
+    function initTheme() {
+        var saved = localStorage.getItem('sspoe-theme');
+        if (saved) {
+            applyTheme(saved);
+        } else {
+            var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            applyTheme(prefersDark ? 'dark' : 'light');
+        }
+    }
+
+    function applyTheme(theme) {
+        document.documentElement.classList.toggle('light-theme', theme === 'light');
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) meta.content = theme === 'light' ? '#f2f2fa' : '#1a1a2e';
+        updateThemeIcon(theme);
+    }
+
+    function updateThemeIcon(theme) {
+        if (theme === 'light') {
+            $themeIcon.innerHTML = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+        } else {
+            $themeIcon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+        }
+    }
+
     // ── NAVIGATION ──
     $btnBack.addEventListener('click', () => {
         exitSimFullscreen();
@@ -564,6 +642,20 @@
     // ── LANGUAGE TOGGLE ──
     $btnLang.addEventListener('click', () => {
         setLang(state.lang === 'fr' ? 'ar' : 'fr');
+    });
+
+    // ── THEME TOGGLE ──
+    $btnTheme.addEventListener('click', () => {
+        const isLight = document.documentElement.classList.contains('light-theme');
+        const newTheme = isLight ? 'dark' : 'light';
+        localStorage.setItem('sspoe-theme', newTheme);
+        applyTheme(newTheme);
+    });
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (!localStorage.getItem('sspoe-theme')) {
+            applyTheme(e.matches ? 'dark' : 'light');
+        }
     });
 
     // ── Handle back button / Escape ──
@@ -621,6 +713,8 @@
 
     // ── INIT ──
     function init() {
+        initTheme();
+        restoreProgress();
         setLang(state.lang);
     }
 

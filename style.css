@@ -15,7 +15,7 @@
   /* Text */
   --text-primary: #e8e8f0;
   --text-secondary: #a0a0c0;
-  --text-muted: #6a6a8a;
+  --text-muted: #9494b8;
 
   /* Accent colors */
   --accent-primary: #7c3aed;
@@ -183,6 +183,14 @@ body::after {
 
 [dir="rtl"] #lang-label {
   font-family: var(--font-main);
+}
+
+.theme-btn svg {
+  transition: transform var(--transition-normal);
+}
+
+.theme-btn:hover svg {
+  transform: rotate(30deg);
 }
 
 /* ── Main Content ── */
@@ -1026,6 +1034,16 @@ body::after {
   transform: scale(0.97);
 }
 
+/* ── Focus Visible ── */
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
 /* ── Animations ── */
 @keyframes fadeInUp {
   from {
@@ -1054,6 +1072,159 @@ body::after {
   50% {
     box-shadow: 0 0 20px 5px var(--accent-glow);
   }
+}
+
+/* ── Light Theme ── */
+.light-theme {
+  --bg-primary: #f2f2fa;
+  --bg-secondary: #e8e8f2;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f0f0f8;
+  --bg-glass: rgba(242, 242, 250, 0.88);
+  --text-primary: #1a1a2e;
+  --text-secondary: #4a4a6a;
+  --text-muted: #64648a;
+  --accent-glow: rgba(124, 58, 237, 0.12);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 30px rgba(124, 58, 237, 0.12);
+  --success-bg: rgba(34, 197, 94, 0.08);
+  --warning-bg: rgba(245, 158, 11, 0.08);
+}
+
+.light-theme body::before {
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.04) 0%, transparent 70%);
+}
+
+.light-theme body::after {
+  background: radial-gradient(circle, rgba(34, 197, 94, 0.03) 0%, transparent 70%);
+}
+
+.light-theme #navbar {
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+.light-theme .nav-btn {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.light-theme .nav-btn:active {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.light-theme .level-card {
+  border-color: rgba(0, 0, 0, 0.07);
+  box-shadow: var(--shadow-sm);
+}
+
+.light-theme .level-card:hover {
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.light-theme .level-icon {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.light-theme .course-card {
+  border-color: rgba(0, 0, 0, 0.07);
+  box-shadow: var(--shadow-sm);
+}
+
+.light-theme .course-icon {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.light-theme .activity-card {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.light-theme .activity-card:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.light-theme .step-card {
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-sm);
+}
+
+.light-theme .step-circle {
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.light-theme .step-line {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.light-theme .prediction-question {
+  background: rgba(124, 58, 237, 0.05);
+}
+
+.light-theme .choice-btn {
+  border-color: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.light-theme .choice-btn:hover {
+  border-color: rgba(0, 0, 0, 0.18);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.light-theme .choice-letter {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.light-theme .open-answer {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.light-theme .sim-instructions {
+  background: rgba(33, 150, 243, 0.05);
+}
+
+.light-theme .btn-fullscreen {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.light-theme .btn-fullscreen:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.light-theme .recap-item {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.light-theme .explanation-summary {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+.light-theme .btn-back-courses {
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.light-theme .btn-back-courses:hover {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+.light-theme .install-banner {
+  border-top-color: rgba(0, 0, 0, 0.08);
+}
+
+.light-theme ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.light-theme ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.light-theme ::selection {
+  background: var(--accent-secondary);
+  color: white;
 }
 
 /* ── Responsive ── */
