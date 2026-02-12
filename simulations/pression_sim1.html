@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulation — La Pression</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(180deg, #87CEEB 0%, #E0C068 60%, #C4A44A 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .sim-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            text-align: center;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+        }
+
+        .sim-instruction {
+            font-size: 0.8rem;
+            color: #34495e;
+            margin-bottom: 16px;
+            text-align: center;
+            opacity: 0.9;
+        }
+
+        canvas {
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            touch-action: none;
+        }
+
+        .info-panel {
+            margin-top: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 10px 18px;
+            display: flex;
+            gap: 20px;
+            font-size: 0.85rem;
+            color: #2c3e50;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-item {
+            text-align: center;
+        }
+
+        .info-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #7f8c8d;
+            margin-bottom: 2px;
+        }
+
+        .info-value {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .info-value.highlight {
+            color: #e74c3c;
+        }
+
+        .btn-toggle {
+            margin-top: 14px;
+            padding: 10px 28px;
+            border: none;
+            border-radius: 25px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.4);
+            transition: all 0.2s ease;
+            touch-action: manipulation;
+        }
+
+        .btn-toggle:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+
+<body>
+    <p class="sim-title">🧱 Expérience : Brique sur le sable</p>
+    <p class="sim-instruction">Appuie sur le bouton pour changer l'orientation de la brique</p>
+    <canvas id="canvas" width="360" height="320"></canvas>
+
+    <div class="info-panel">
+        <div class="info-item">
+            <div class="info-label">Force (Poids)</div>
+            <div class="info-value" id="force-val">20 N</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">Surface</div>
+            <div class="info-value" id="surface-val">0.02 m²</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">Pression</div>
+            <div class="info-value highlight" id="pressure-val">1 000 Pa</div>
+        </div>
+    </div>
+
+    <button class="btn-toggle" id="btn-toggle">🔄 Changer d'orientation</button>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const btnToggle = document.getElementById('btn-toggle');
+
+        let isFlat = true;
+        let animProgress = 0;
+        let targetDepth = 0;
+        let currentDepth = 0;
+
+        const FORCE = 20; // Newtons
+
+        // Brick dimensions (pixels)
+        const BRICK = {
+            flat: { w: 160, h: 40, surface: 0.02, label: 'À plat' },
+            edge: { w: 40, h: 160, surface: 0.005, label: 'Sur la tranche' }
+        };
+
+        function calcPressure(force, surface) {
+            return force / surface;
+        }
+
+        function lerp(a, b, t) {
+            return a + (b - a) * t;
+        }
+
+        function updateInfo() {
+            const mode = isFlat ? BRICK.flat : BRICK.edge;
+            const pressure = calcPressure(FORCE, mode.surface);
+
+            document.getElementById('force-val').textContent = FORCE + ' N';
+            document.getElementById('surface-val').textContent = mode.surface.toFixed(3) + ' m²';
+            document.getElementById('pressure-val').textContent = pressure.toLocaleString('fr-FR') + ' Pa';
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const sandY = 200;
+            const mode = isFlat ? BRICK.flat : BRICK.edge;
+            const maxDepth = isFlat ? 10 : 50;
+
+            targetDepth = maxDepth;
+            currentDepth = lerp(currentDepth, targetDepth, 0.08);
+
+            // Sky gradient
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, sandY);
+            skyGrad.addColorStop(0, '#87CEEB');
+            skyGrad.addColorStop(1, '#B0E0E6');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, canvas.width, sandY);
+
+            // Sand
+            const sandGrad = ctx.createLinearGradient(0, sandY, 0, canvas.height);
+            sandGrad.addColorStop(0, '#E8C56D');
+            sandGrad.addColorStop(0.3, '#D4A843');
+            sandGrad.addColorStop(1, '#B8923A');
+            ctx.fillStyle = sandGrad;
+            ctx.fillRect(0, sandY, canvas.width, canvas.height - sandY);
+
+            // Sand surface texture
+            ctx.strokeStyle = 'rgba(180, 140, 60, 0.3)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 20; i++) {
+                const x = (i * 20) + 5;
+                ctx.beginPath();
+                ctx.moveTo(x, sandY + 2);
+                ctx.lineTo(x + 10, sandY + 5);
+                ctx.stroke();
+            }
+
+            // Brick position
+            const brickX = (canvas.width - mode.w) / 2;
+            const brickY = sandY - mode.h + currentDepth;
+
+            // Depression in sand (visual feedback)
+            ctx.fillStyle = '#C49A3C';
+            ctx.beginPath();
+            ctx.ellipse(
+                canvas.width / 2,
+                sandY + currentDepth * 0.3,
+                mode.w / 2 + 10,
+                currentDepth * 0.6 + 3,
+                0, 0, Math.PI
+            );
+            ctx.fill();
+
+            // Brick shadow
+            ctx.fillStyle = 'rgba(0,0,0,0.15)';
+            ctx.fillRect(brickX + 4, brickY + 4, mode.w, mode.h);
+
+            // Brick body
+            const brickGrad = ctx.createLinearGradient(brickX, brickY, brickX, brickY + mode.h);
+            brickGrad.addColorStop(0, '#C0392B');
+            brickGrad.addColorStop(0.5, '#A93226');
+            brickGrad.addColorStop(1, '#922B21');
+            ctx.fillStyle = brickGrad;
+            ctx.fillRect(brickX, brickY, mode.w, mode.h);
+
+            // Brick border
+            ctx.strokeStyle = '#7B241C';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(brickX, brickY, mode.w, mode.h);
+
+            // Brick texture lines
+            ctx.strokeStyle = 'rgba(0,0,0,0.1)';
+            ctx.lineWidth = 1;
+            if (isFlat) {
+                for (let x = brickX + 20; x < brickX + mode.w; x += 25) {
+                    ctx.beginPath();
+                    ctx.moveTo(x, brickY);
+                    ctx.lineTo(x, brickY + mode.h);
+                    ctx.stroke();
+                }
+            } else {
+                for (let y = brickY + 20; y < brickY + mode.h; y += 25) {
+                    ctx.beginPath();
+                    ctx.moveTo(brickX, y);
+                    ctx.lineTo(brickX + mode.w, y);
+                    ctx.stroke();
+                }
+            }
+
+            // Force arrow
+            const arrowX = canvas.width / 2;
+            const arrowStartY = brickY - 50;
+            const arrowEndY = brickY - 5;
+
+            ctx.strokeStyle = '#2980b9';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(arrowX, arrowStartY);
+            ctx.lineTo(arrowX, arrowEndY);
+            ctx.stroke();
+
+            // Arrow head
+            ctx.fillStyle = '#2980b9';
+            ctx.beginPath();
+            ctx.moveTo(arrowX, arrowEndY);
+            ctx.lineTo(arrowX - 8, arrowEndY - 12);
+            ctx.lineTo(arrowX + 8, arrowEndY - 12);
+            ctx.closePath();
+            ctx.fill();
+
+            // Force label
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = 'bold 13px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('F = ' + FORCE + ' N', arrowX, arrowStartY - 8);
+
+            // Surface indicator
+            const surfY = sandY + 2;
+            ctx.strokeStyle = '#e74c3c';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 3]);
+            ctx.beginPath();
+            ctx.moveTo(brickX - 5, surfY);
+            ctx.lineTo(brickX + mode.w + 5, surfY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Surface label
+            ctx.fillStyle = '#e74c3c';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('S = ' + mode.surface.toFixed(3) + ' m²', canvas.width / 2, sandY + currentDepth + 40);
+
+            // Depth indicator
+            if (currentDepth > 5) {
+                const depthX = brickX + mode.w + 20;
+                ctx.strokeStyle = '#8e44ad';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(depthX, sandY);
+                ctx.lineTo(depthX, sandY + currentDepth);
+                ctx.stroke();
+
+                // Depth ticks
+                ctx.beginPath();
+                ctx.moveTo(depthX - 5, sandY);
+                ctx.lineTo(depthX + 5, sandY);
+                ctx.moveTo(depthX - 5, sandY + currentDepth);
+                ctx.lineTo(depthX + 5, sandY + currentDepth);
+                ctx.stroke();
+
+                ctx.fillStyle = '#8e44ad';
+                ctx.font = 'bold 10px sans-serif';
+                ctx.textAlign = 'left';
+                ctx.fillText('profondeur', depthX + 8, sandY + currentDepth / 2 + 4);
+            }
+
+            // Mode label
+            ctx.fillStyle = '#2c3e50';
+            ctx.font = 'bold 14px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Position : ' + mode.label, canvas.width / 2, 25);
+
+            requestAnimationFrame(draw);
+        }
+
+        btnToggle.addEventListener('click', () => {
+            isFlat = !isFlat;
+            currentDepth = 0;
+            updateInfo();
+        });
+
+        // Touch/click on canvas also toggles
+        canvas.addEventListener('click', () => {
+            isFlat = !isFlat;
+            currentDepth = 0;
+            updateInfo();
+        });
+
+        updateInfo();
+        draw();
+    </script>
+</body>
+
+</html>

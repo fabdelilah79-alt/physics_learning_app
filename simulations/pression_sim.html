@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratoire d'Identification des Plastiques - Pro</title>
+    <style>
+        :root {
+            --primary: #007bff;
+            --secondary: #6c757d;
+            --bg-color: #f0f2f5;
+            --panel-bg: #ffffff;
+            --text-color: #333;
+            --border-radius: 12px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        header {
+            width: 100%;
+            max-width: 1100px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Conteneur Principal */
+        #main-container {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            max-width: 1100px;
+            height: 100%;
+            max-height: 700px;
+            background: var(--panel-bg);
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Colonne Gauche : Canvas + Toolbar */
+        #left-column {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            border-right: 1px solid #ddd;
+        }
+
+        #canvas-wrapper {
+            flex-grow: 1;
+            position: relative;
+            background: radial-gradient(circle at center, #eef2f3, #8e9eab);
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+        canvas:active { cursor: grabbing; }
+
+        /* Barre d'outils en bas */
+        #bottom-toolbar {
+            height: 80px;
+            background: #fff;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 0 20px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        /* Colonne Droite : Sidebar (Log + Identification) */
+        #sidebar {
+            width: 280px;
+            min-width: 280px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background-color: #f8f9fa;
+            overflow-y: auto;
+        }
+
+        .panel-section {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        h3 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+            color: #555;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Boutons Toolbar (Bas) */
+        .tool-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100px;
+            height: 60px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .tool-btn span { font-size: 1.5rem; margin-bottom: 2px; }
+
+        .tool-btn:hover { background: #f0f0f0; transform: translateY(-2px); }
+        
+        .tool-btn.active {
+            border-color: var(--primary);
+            background: #e7f1ff;
+            color: var(--primary);
+            box-shadow: 0 4px 6px rgba(0,123,255,0.2);
+        }
+
+        /* Boutons Actions (Sidebar) */
+        .btn-action {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            transition: transform 0.1s;
+            margin-top: 5px;
+        }
+        .btn-reset { background: var(--secondary); margin-top: 10px; }
+        .btn-action:hover { opacity: 0.9; transform: scale(1.02); }
+        
+        /* Bouton Plein Ecran */
+        #fullscreen-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.8);
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            z-index: 50;
+            transition: background 0.2s;
+        }
+        #fullscreen-btn:hover { background: white; }
+
+        /* Log Console */
+        #log-console {
+            height: 150px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            color: #444;
+            border: 1px solid #eee;
+            background: #fafafa;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+        }
+        .log-entry { margin-bottom: 4px; border-bottom: 1px solid #eee; padding-bottom: 2px;}
+
+        select {
+            width: 100%;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+
+        /* Overlay Victoire */
+        #overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            color: white;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+        #overlay h2 { font-size: 3rem; color: #2ecc71; text-shadow: 0 0 20px rgba(46, 204, 113, 0.6); margin-bottom: 10px;}
+
+        /* Responsive Mobile */
+        @media (max-width: 768px) {
+            #main-container { flex-direction: column; height: auto; max-height: none; }
+            #sidebar { width: 100%; min-width: 0; height: auto; }
+            #canvas-wrapper { height: 400px; }
+            #bottom-toolbar { flex-wrap: wrap; height: auto; padding: 10px; }
+            .tool-btn { width: 45%; height: 50px; margin-bottom: 5px; flex-direction: row; gap: 10px; }
+        }
+        
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🔬 Laboratoire Plastiques <span style="font-size:0.6em; background:#2ecc71; color:white; padding:2px 8px; border-radius:10px;">PRO</span></h1>
+    </header>
+
+    <div id="main-container">
+        
+        <!-- Colonne Gauche : Zone de travail -->
+        <div id="left-column">
+            
+            <div id="canvas-wrapper">
+                <button id="fullscreen-btn" onclick="toggleFullScreen()" title="Plein Écran">⛶</button>
+                <canvas id="simCanvas"></canvas>
+                <div id="overlay">
+                    <h2>BRAVO !</h2>
+                    <p>Analyse correcte. L'échantillon a été identifié.</p>
+                    <div style="margin-top:20px;">
+                        <button class="btn-action" onclick="resetSimulation(true)">Nouvel Échantillon</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Barre d'outils (Boutons en bas) -->
+            <div id="bottom-toolbar">
+                <button class="tool-btn active" onclick="setMode('fresh_water')"><span>💧</span>Eau Douce</button>
+                <button class="tool-btn" onclick="setMode('salt_water')"><span>🌊</span>Eau Salée</button>
+                <button class="tool-btn" onclick="setMode('acetone')"><span>🧪</span>Acétone</button>
+                <button class="tool-btn" onclick="setMode('flame')"><span>🔥</span>Flamme</button>
+            </div>
+        </div>
+
+        <!-- Colonne Droite : Sidebar (Infos) -->
+        <div id="sidebar">
+            <div class="panel-section">
+                <h3>📝 Observations</h3>
+                <div id="log-console">
+                    <div class="log-entry">Système initialisé.</div>
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h3>❓ Identification</h3>
+                <label for="guess-select" style="font-size:0.9rem; display:block; margin-bottom:5px;">L'inconnu est :</label>
+                <select id="guess-select">
+                    <option value="">-- Hypothèse --</option>
+                    <option value="PE">Polyéthylène (PE)</option>
+                    <option value="PS">Polystyrène (PS)</option>
+                    <option value="PVC">PVC</option>
+                    <option value="PET">PET</option>
+                </select>
+                <button class="btn-action" onclick="checkGuess()">Valider</button>
+                <button class="btn-action btn-reset" onclick="resetPositions()">Ranger le matériel</button>
+            </div>
+            
+            <div class="panel-section" style="font-size:0.8rem; color:#666;">
+                <strong>Aide :</strong>
+                <ul style="padding-left:15px; margin:5px 0;">
+                    <li>Glissez les plastiques dans le bécher ou sur la flamme.</li>
+                    <li>Utilisez la barre en bas pour changer de test.</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+<script>
+/**
+ * MOTEUR PHYSIQUE ET GRAPHIQUE AVANCÉ
+ * HTML5 Canvas - Vanilla JS
+ */
+
+const canvas = document.getElementById('simCanvas');
+const ctx = canvas.getContext('2d');
+const container = document.getElementById('main-container');
+let width, height;
+
+// --- CONFIGURATION PHYSIQUE ---
+const DENSITIES = {
+    PE: 0.95,
+    PS: 1.05,
+    PET: 1.38,
+    PVC: 1.40,
+    WATER: 1.00,
+    SALT_WATER: 1.20
+};
+
+const BASE_COLORS = {
+    PE: { h: 200, s: 20, l: 90 },
+    PS: { h: 50, s: 80, l: 90 },
+    PVC: { h: 280, s: 40, l: 70 },
+    PET: { h: 150, s: 60, l: 80 },
+    MYSTERY: { h: 210, s: 10, l: 40 }
+};
+
+const MODES = {
+    FRESH: 'fresh_water',
+    SALT: 'salt_water',
+    ACETONE: 'acetone',
+    FLAME: 'flame'
+};
+
+// --- ETAT ---
+let currentMode = MODES.FRESH;
+let plastics = [];
+let particles = [];
+let mysteryType = '';
+let draggedPlastic = null;
+let mouseOffset = { x: 0, y: 0 };
+let lastLogTime = 0;
+
+// Zone active (Bécher/Flamme)
+const activeZone = {
+    x: 0, y: 0, w: 220, h: 320, 
+    liquidLevel: 260,
+    type: 'liquid'
+};
+const TABLE_HEIGHT = 20;
+
+// --- CLASSES AVANCÉES ---
+
+class Particle {
+    constructor(x, y, type) {
+        this.x = x;
+        this.y = y;
+        this.type = type;
+        this.life = 1.0;
+        this.size = Math.random() * 3 + 2;
+        this.vx = (Math.random() - 0.5) * 2;
+        this.vy = (Math.random() - 1) * 2;
+        
+        if (type === 'bubble') {
+            this.vy = -Math.random() * 2 - 1;
+            this.vx *= 0.5;
+        } 
+        else if (type.includes('smoke')) {
+            this.vy = -Math.random() * 1.5 - 0.5;
+            this.size = Math.random() * 5 + 4;
+            this.vx += 0.5; 
+        }
+        else if (type === 'splash') {
+            this.vy = -Math.random() * 4 - 2;
+            this.life = 0.6;
+        }
+    }
+
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        
+        if (this.type.includes('smoke')) {
+            this.size += 0.1;
+            this.vx *= 0.98;
+        } else if (this.type === 'splash') {
+            this.vy += 0.2; 
+        }
+
+        this.life -= 0.015;
+    }
+
+    draw(ctx) {
+        ctx.globalAlpha = Math.max(0, this.life);
+        ctx.beginPath();
+        
+        if (this.type === 'bubble') {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+        } 
+        else if (this.type === 'fire_green') {
+            ctx.fillStyle = `rgba(50, 255, 50, ${this.life})`;
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+        } 
+        else if (this.type === 'fire_orange') {
+            ctx.fillStyle = `rgba(255, ${Math.floor(this.life*200)}, 0, ${this.life})`;
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        else if (this.type === 'smoke' || this.type === 'smoke_black') {
+            let col = (this.type === 'smoke_black') ? 50 : 200;
+            ctx.fillStyle = `rgba(${col}, ${col}, ${col}, ${this.life * 0.5})`;
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        else if (this.type === 'splash') {
+            ctx.fillStyle = 'rgba(200, 230, 255, 0.8)';
+            ctx.arc(this.x, this.y, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.globalAlpha = 1;
+    }
+}
+
+class Plastic {
+    constructor(label, type, x, y) {
+        this.label = label;
+        this.type = type;
+        this.realType = (type === 'MYSTERY') ? mysteryType : type;
+        
+        this.x = x;
+        this.y = y;
+        this.originalW = 45;
+        this.originalH = 45;
+        this.w = this.originalW;
+        this.h = this.originalH;
+        
+        this.vx = 0;
+        this.vy = 0;
+        this.angle = (Math.random() - 0.5) * 0.5; 
+        this.angularVel = 0;
+        
+        this.homeX = x;
+        this.homeY = y;
+        
+        this.isDragging = false;
+        this.inZone = false;
+        this.wasInLiquid = false;
+        
+        this.baseColor = BASE_COLORS[this.type] || BASE_COLORS.MYSTERY;
+    }
+
+    update() {
+        if (this.isDragging) {
+            this.vx = 0;
+            this.vy = 0;
+            this.angularVel *= 0.8;
+            this.angle += this.angularVel;
+            return;
+        }
+
+        // --- CONSTANTES PHYSIQUES AJUSTÉES ---
+        const gravity = 0.6;          // Augmenté (était 0.25)
+        const friction = 0.96;
+        const waterDrag = 0.92;       // Augmenté pour moins de friction liquide (était 0.85)
+        const floorY = height - TABLE_HEIGHT;
+        
+        // --- DETECTION ZONE ---
+        let centerX = this.x + this.w/2;
+        let centerY = this.y + this.h/2;
+        
+        let zoneL = activeZone.x;
+        let zoneR = activeZone.x + activeZone.w;
+        let zoneB = activeZone.y + activeZone.h;
+        // On considère dans la zone si centré horizontalement et assez bas
+        let inHorizontal = (centerX > zoneL + 10 && centerX < zoneR - 10);
+        let inVertical = (centerY > activeZone.y); 
+        this.inZone = (inHorizontal && inVertical);
+
+        // --- COMPORTEMENT ---
+        if (this.inZone) {
+            
+            // Mode Flamme
+            if (currentMode === MODES.FLAME) {
+                let burnerTop = zoneB - 100; // Haut du bruleur physique
+                
+                if (this.y + this.h < burnerTop) {
+                    this.vy += gravity;
+                } else {
+                    // Collision bruleur
+                    this.y = burnerTop - this.h;
+                    this.vy = 0;
+                    this.vx *= 0.5;
+                    this.angularVel *= 0.5;
+                    reactToFlame(this);
+                }
+                
+                if (this.y + this.h >= burnerTop - 2) this.angle *= 0.9;
+            } 
+            // Mode Acétone
+            else if (currentMode === MODES.ACETONE) {
+                // Fond de la coupelle
+                let dishBottom = zoneB - 15; // Un peu au dessus de la table (épaisseur verre)
+                if (this.y + this.h < dishBottom) {
+                    this.vy += gravity;
+                } else {
+                    this.y = dishBottom - this.h;
+                    this.vy = 0;
+                    this.vx *= 0.5;
+                    this.angle *= 0.9;
+                    reactToAcetone(this);
+                }
+            } 
+            // Mode Liquide (Eau / Eau Salée)
+            else {
+                let liquidDensity = (currentMode === MODES.SALT) ? DENSITIES.SALT_WATER : DENSITIES.WATER;
+                let plasticDensity = DENSITIES[this.realType];
+                
+                // Niveau surface liquide
+                let surfaceY = zoneB - activeZone.liquidLevel + 15;
+
+                // Splash
+                if (this.y + this.h > surfaceY && !this.wasInLiquid && this.vy > 2) {
+                    spawnSplash(this.x + this.w/2, surfaceY);
+                    this.vy *= 0.5;
+                }
+                this.wasInLiquid = (this.y + this.h > surfaceY);
+
+                if (centerY > surfaceY) {
+                    // Archimède (Booster le facteur pour plus de vitesse)
+                    // Facteur augmenté de 0.08 à 0.18 pour une réponse plus rapide
+                    let buoyancy = (liquidDensity - plasticDensity) * 0.18;
+                    buoyancy += Math.sin(Date.now() / 200) * 0.01; // Oscillation plus rapide aussi
+
+                    this.vy -= buoyancy;
+                    this.vy *= waterDrag;
+                    this.angularVel *= 0.9; 
+                    this.angularVel += (0 - this.angle) * 0.02;
+
+                    // Surface (Faire rebondir un peu moins pour stabiliser vite)
+                    if (this.y < surfaceY - this.h * 0.8 && plasticDensity < liquidDensity) {
+                         this.y = surfaceY - this.h * 0.8;
+                         this.vy *= 0.4; // Plus de rebond surface
+                    }
+                    // Fond (intérieur du becher)
+                    if (this.y + this.h > zoneB - 10) {
+                        this.y = zoneB - 10 - this.h;
+                        this.vy = 0;
+                    }
+
+                    if (Math.abs(this.vy) < 0.02) {
+                        if (this.y > zoneB - 50) logOnce(this.label + " coule au fond.");
+                        else if (this.y < surfaceY + 40) logOnce(this.label + " flotte.");
+                    }
+                } else {
+                    this.vy += gravity;
+                }
+            }
+        } else {
+            this.wasInLiquid = false;
+            // Hors zone : gravité vers le sol (table)
+            if (this.y + this.h < floorY) {
+                this.vy += gravity;
+            } else {
+                // Sol
+                this.y = floorY - this.h;
+                this.vy = -this.vy * 0.4;
+                this.vx *= 0.8; 
+                this.angularVel *= 0.8;
+                if(Math.abs(this.vy) < 0.5) this.vy = 0;
+            }
+        }
+
+        this.angle += this.angularVel;
+        
+        // Murs
+        if (this.x < 0) { this.x = 0; this.vx *= -0.5; }
+        if (this.x + this.w > width) { this.x = width - this.w; this.vx *= -0.5; }
+
+        // Confinement horizontal dans le becher si dedans
+        if (this.inZone && !this.isDragging) {
+            if (this.x < zoneL) { this.x = zoneL; this.vx *= -0.5; }
+            if (this.x + this.w > zoneR) { this.x = zoneR - this.w; this.vx *= -0.5; }
+        }
+
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vx *= friction;
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x + this.w/2, this.y + this.h/2);
+        ctx.rotate(this.angle);
+
+        let col = this.baseColor;
+        let grad = ctx.createLinearGradient(-this.w/2, -this.h/2, this.w/2, this.h/2);
+        grad.addColorStop(0, `hsl(${col.h}, ${col.s}%, ${col.l + 15}%)`); 
+        grad.addColorStop(0.5, `hsl(${col.h}, ${col.s}%, ${col.l}%)`);   
+        grad.addColorStop(1, `hsl(${col.h}, ${col.s}%, ${col.l - 15}%)`); 
+
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.roundRect(-this.w/2, -this.h/2, this.w, this.h, 6);
+        ctx.fill();
+        
+        ctx.strokeStyle = `hsl(${col.h}, ${col.s}%, ${col.l - 20}%)`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.fillStyle = `rgba(0,0,0,0.6)`;
+        ctx.font = 'bold 14px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.label, 0, 0);
+
+        ctx.restore();
+    }
+}
+
+// --- INIT & RESIZE ---
+
+function init() {
+    resize();
+    resetSimulation(true);
+    window.addEventListener('resize', resize);
+    
+    canvas.addEventListener('mousedown', handleInputStart);
+    canvas.addEventListener('mousemove', handleInputMove);
+    canvas.addEventListener('mouseup', handleInputEnd);
+    canvas.addEventListener('mouseleave', handleInputEnd);
+    
+    canvas.addEventListener('touchstart', (e) => handleInputStart(e.touches[0]));
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleInputMove(e.touches[0]); });
+    canvas.addEventListener('touchend', handleInputEnd);
+
+    requestAnimationFrame(loop);
+}
+
+function resize() {
+    const wrapper = document.getElementById('canvas-wrapper');
+    width = wrapper.clientWidth;
+    height = wrapper.clientHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    activeZone.h = 300; 
+    activeZone.y = (height - TABLE_HEIGHT) - activeZone.h; 
+    activeZone.x = width / 2 - activeZone.w / 2;
+}
+
+function toggleFullScreen() {
+    if (!document.fullscreenElement) {
+        container.requestFullscreen().catch(err => {
+            alert(`Erreur activation plein écran: ${err.message}`);
+        });
+    } else {
+        document.exitFullscreen();
+    }
+}
+
+function resetSimulation(newMystery = false) {
+    plastics = [];
+    const types = ['PE', 'PS', 'PVC', 'PET'];
+    
+    // Placement étagère
+    let startY = 60;
+    types.forEach((t, i) => {
+        plastics.push(new Plastic(t, t, 40, startY + i * 65));
+    });
+
+    if (newMystery) {
+        let newType;
+        // Boucle pour forcer un type différent du précédent
+        // (pour éviter l'impression que le hasard ne fonctionne pas)
+        do {
+            newType = types[Math.floor(Math.random() * types.length)];
+        } while (newType === mysteryType && types.length > 1);
+
+        mysteryType = newType;
+        
+        console.log("Nouveau Secret: " + mysteryType); // Aide debug
+        document.getElementById('overlay').style.display = 'none';
+        document.getElementById('guess-select').value = "";
+        clearLog();
+        log(`Nouvel échantillon prêt.`);
+    }
+
+    plastics.push(new Plastic('?', 'MYSTERY', 40, startY + 4 * 65));
+    particles = [];
+}
+
+function resetPositions() {
+    plastics.forEach(p => {
+        p.x = p.homeX;
+        p.y = p.homeY;
+        p.vx = 0; p.vy = 0;
+        p.angle = 0; p.angularVel = 0;
+        p.w = p.originalW; p.h = p.originalH;
+    });
+    log("Matériel rangé.");
+}
+
+function setMode(mode) {
+    currentMode = mode;
+    // UI Update
+    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+    if(event && event.currentTarget) event.currentTarget.classList.add('active');
+    
+    log(`Mode : ${getModeName(mode)}`);
+    
+    // Ejection objets de la zone
+    plastics.forEach(p => {
+        if(p.inZone) {
+            p.y = activeZone.y - 70; 
+            p.vy = -3;
+            p.inZone = false;
+        }
+    });
+}
+
+function getModeName(m) {
+    if(m === MODES.FRESH) return "Eau Douce";
+    if(m === MODES.SALT) return "Eau Salée";
+    if(m === MODES.ACETONE) return "Acétone";
+    if(m === MODES.FLAME) return "Bec Bunsen";
+}
+
+// --- REACTIONS ---
+
+function reactToFlame(p) {
+    let centerX = p.x + p.w/2;
+    let flameX = activeZone.x + activeZone.w/2;
+    
+    if (Math.abs(centerX - flameX) < 35) {
+        if (p.realType === 'PVC') {
+            spawnParticles(centerX, p.y + p.h, 'fire_green', 2);
+            spawnParticles(centerX, p.y, 'smoke_black', 1);
+            logOnce(`Flamme VERTE ! (Chlore)`);
+        } else {
+            spawnParticles(centerX, p.y + p.h, 'fire_orange', 2);
+            spawnParticles(centerX, p.y, 'smoke', 1);
+            logOnce(`Combustion classique.`);
+        }
+    }
+}
+
+function reactToAcetone(p) {
+    if (p.realType === 'PS') {
+        if (p.w > 10) {
+            p.w -= 0.2; p.h -= 0.2;
+            p.x += 0.1; p.y += 0.1;
+            spawnParticles(p.x + p.w/2, p.y + p.h, 'bubble', 1);
+            if (Math.random() > 0.9) logOnce(`Le ${p.label} se dissout !`);
+        } else {
+             logOnce(`${p.label} dissous.`);
+        }
+    } else {
+        logOnce(`Pas de réaction.`);
+    }
+}
+
+function spawnParticles(x, y, type, count) {
+    for(let i=0; i<count; i++) particles.push(new Particle(x, y, type));
+}
+
+function spawnSplash(x, y) {
+    for(let i=0; i<8; i++) particles.push(new Particle(x, y, 'splash'));
+}
+
+// --- INPUT HANDLERS ---
+function handleInputStart(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX || e.pageX) - rect.left;
+    const my = (e.clientY || e.pageY) - rect.top;
+
+    for (let i = plastics.length - 1; i >= 0; i--) {
+        let p = plastics[i];
+        if (mx >= p.x && mx <= p.x + p.w && my >= p.y && my <= p.y + p.h) {
+            draggedPlastic = p;
+            p.isDragging = true;
+            mouseOffset.x = mx - p.x;
+            mouseOffset.y = my - p.y;
+            p.angularVel = (Math.random() - 0.5) * 0.2;
+            plastics.push(plastics.splice(i, 1)[0]); 
+            break;
+        }
+    }
+}
+
+function handleInputMove(e) {
+    if (!draggedPlastic) return;
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX || e.pageX) - rect.left;
+    const my = (e.clientY || e.pageY) - rect.top;
+
+    draggedPlastic.x = mx - mouseOffset.x;
+    draggedPlastic.y = my - mouseOffset.y;
+    draggedPlastic.vx = (e.movementX || 0) * 0.5;
+    draggedPlastic.vy = (e.movementY || 0) * 0.5;
+}
+
+function handleInputEnd() {
+    if (draggedPlastic) {
+        draggedPlastic.isDragging = false;
+        draggedPlastic = null;
+    }
+}
+
+// --- UTILS ---
+let lastLogMsg = "";
+function log(msg) {
+    const consoleDiv = document.getElementById('log-console');
+    const entry = document.createElement('div');
+    entry.className = "log-entry";
+    entry.innerHTML = `> ${msg}`;
+    consoleDiv.prepend(entry);
+    lastLogMsg = msg;
+    lastLogTime = Date.now();
+}
+
+function logOnce(msg) {
+    if (msg === lastLogMsg && Date.now() - lastLogTime < 2000) return;
+    if (Date.now() - lastLogTime > 500) log(msg);
+}
+
+function clearLog() {
+    document.getElementById('log-console').innerHTML = "";
+}
+
+function checkGuess() {
+    const val = document.getElementById('guess-select').value;
+    if (!val) { alert("Choisissez une hypothèse."); return; }
+    
+    if (val === mysteryType) {
+        document.getElementById('overlay').style.display = 'flex';
+        for(let i=0; i<50; i++) {
+             particles.push(new Particle(width/2, height/2, 'fire_orange'));
+             particles.push(new Particle(width/2, height/2, 'fire_green'));
+        }
+    } else {
+        log(`<span style="color:#dc3545">Incorrect</span>. Ce n'est pas du ${val}.`);
+    }
+}
+
+// --- DESSIN ---
+
+function drawBeaker(ctx, x, y, w, h, liquidColor, label) {
+    const liquidH = activeZone.liquidLevel;
+    const surfaceY = y + h - liquidH;
+    const rimH = 20;
+
+    // Fond liquide
+    ctx.fillStyle = liquidColor;
+    ctx.beginPath();
+    ctx.ellipse(x + w/2, y + h - 10, w/2, rimH/2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Corps liquide
+    ctx.fillRect(x, surfaceY, w, liquidH - 10);
+
+    // Surface liquide
+    ctx.globalAlpha = 0.8; 
+    ctx.beginPath();
+    ctx.ellipse(x + w/2, surfaceY, w/2, rimH/2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1.0;
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Verre
+    let gradGlass = ctx.createLinearGradient(x, y, x+w, y);
+    gradGlass.addColorStop(0, 'rgba(255,255,255,0.4)');
+    gradGlass.addColorStop(0.2, 'rgba(255,255,255,0.1)');
+    gradGlass.addColorStop(0.8, 'rgba(255,255,255,0.1)');
+    gradGlass.addColorStop(1, 'rgba(255,255,255,0.4)');
+    
+    ctx.fillStyle = gradGlass;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y+h - 10);
+    ctx.quadraticCurveTo(x + w/2, y + h + 10, x + w, y + h - 10);
+    ctx.lineTo(x + w, y);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(200,200,200,0.8)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    
+    // Bord haut
+    ctx.beginPath();
+    ctx.ellipse(x + w/2, y, w/2, rimH/2, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.fillStyle = '#333';
+    ctx.font = 'bold 16px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, x + w/2, y + h + 25);
+}
+
+function drawBunsen(ctx, x, y, w, h) {
+    // Base Métallique
+    let gradMetal = ctx.createLinearGradient(x, y, x+w, y);
+    gradMetal.addColorStop(0, '#444');
+    gradMetal.addColorStop(0.5, '#777');
+    gradMetal.addColorStop(1, '#444');
+    
+    ctx.fillStyle = gradMetal;
+    ctx.beginPath();
+    ctx.moveTo(x + w/2 - 30, y + h);
+    ctx.lineTo(x + w/2 + 30, y + h);
+    ctx.lineTo(x + w/2 + 15, y + h - 20);
+    ctx.lineTo(x + w/2 - 15, y + h - 20);
+    ctx.fill();
+    
+    // Tube
+    ctx.fillStyle = '#666';
+    ctx.fillRect(x + w/2 - 8, y + h - 110, 16, 90);
+    
+    // Flamme
+    let flameH = 70 + Math.random() * 5;
+    let flameY = y + h - 110 - flameH + 10;
+    let gradFlame = ctx.createRadialGradient(x + w/2, flameY + flameH, 5, x + w/2, flameY, 25);
+    gradFlame.addColorStop(0, "rgba(50, 50, 255, 0.8)");
+    gradFlame.addColorStop(0.4, "rgba(0, 200, 255, 0.5)");
+    gradFlame.addColorStop(1, "rgba(255, 255, 255, 0)");
+    
+    ctx.fillStyle = gradFlame;
+    ctx.beginPath();
+    ctx.ellipse(x + w/2, flameY + flameH/2, 12, flameH/2, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#333';
+    ctx.textAlign = 'center';
+    ctx.fillText("Bec Bunsen", x + w/2, y + h + 25);
+}
+
+function drawPetri(ctx, x, y, w, h, label) {
+    let cy = y + h - 25; // Plus bas pour être "sur table"
+    
+    // Liquide
+    ctx.fillStyle = 'rgba(230, 245, 255, 0.7)';
+    ctx.beginPath();
+    ctx.ellipse(x + w/2, cy + 5, w/2 - 20, 20, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Verre
+    ctx.strokeStyle = 'rgba(180,180,180,0.8)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(x + w/2, cy, w/2 - 10, 25, 0, 0, Math.PI);
+    ctx.stroke();
+    
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(180,180,180,0.4)';
+    ctx.beginPath();
+    ctx.ellipse(x + w/2, cy, w/2 - 10, 25, 0, Math.PI, Math.PI * 2); 
+    ctx.stroke();
+
+    ctx.fillStyle = '#333';
+    ctx.textAlign = 'center';
+    ctx.fillText(label, x + w/2, y + h + 25);
+}
+
+function loop() {
+    ctx.clearRect(0, 0, width, height);
+
+    // 1. Décor
+    // Etagere (Gauche)
+    let gradShelf = ctx.createLinearGradient(0,0,100,0);
+    gradShelf.addColorStop(0, '#dcdcdc');
+    gradShelf.addColorStop(1, '#ffffff');
+    ctx.fillStyle = gradShelf;
+    ctx.fillRect(0, 0, 100, height);
+    
+    // Planches Etagere
+    ctx.fillStyle = '#bdc3c7';
+    for(let i=0; i<6; i++) {
+        let sy = 60 + i*65 + 50;
+        ctx.fillRect(10, sy, 80, 4);
+    }
+
+    // Table (Bas)
+    let floorY = height - TABLE_HEIGHT;
+    let gradTable = ctx.createLinearGradient(0, floorY, 0, height);
+    gradTable.addColorStop(0, '#95a5a6');
+    gradTable.addColorStop(1, '#7f8c8d');
+    ctx.fillStyle = gradTable;
+    ctx.fillRect(100, floorY, width - 100, TABLE_HEIGHT);
+
+    // 2. Outils
+    const zx = activeZone.x;
+    const zy = activeZone.y;
+    const zw = activeZone.w;
+    const zh = activeZone.h;
+
+    if (currentMode === MODES.FRESH) {
+        drawBeaker(ctx, zx, zy, zw, zh, 'rgba(52, 152, 219, 0.5)', "Eau Douce");
+    } else if (currentMode === MODES.SALT) {
+        drawBeaker(ctx, zx, zy, zw, zh, 'rgba(41, 128, 185, 0.6)', "Eau Salée");
+    } else if (currentMode === MODES.ACETONE) {
+        drawPetri(ctx, zx, zy, zw, zh, "Acétone");
+    } else if (currentMode === MODES.FLAME) {
+        drawBunsen(ctx, zx, zy, zw, zh);
+    }
+
+    // 3. Objets & Particules
+    plastics.forEach(p => { p.update(); p.draw(ctx); });
+    for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i];
+        p.update(); p.draw(ctx);
+        if (p.life <= 0) particles.splice(i, 1);
+    }
+
+    requestAnimationFrame(loop);
+}
+
+window.onload = init;
+
+</script>
+</body>
+</html>
